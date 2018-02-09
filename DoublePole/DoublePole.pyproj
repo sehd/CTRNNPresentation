@@ -4,7 +4,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>9fdce37c-ffea-4b3a-bd4b-1c957dfad636</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>Tester.py</StartupFile>
+    <StartupFile>CTRNN.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
@@ -21,6 +21,12 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="CTRNN.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="DoublePoleVisualizer.py">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="DoublePole.py" />
     <Compile Include="graphics.py" />
     <Compile Include="Tester.py">

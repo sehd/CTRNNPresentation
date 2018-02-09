@@ -3,22 +3,36 @@ from datetime import *
 from threading import Thread
 from time import sleep
 class DoublePole(Thread):
-    lengths = (1,1)
-    degrees = (pi,pi)
-    angVelocity = (0,0)
-    rou = (0.1,0.1)
+    
+    #System State
+    lengths = None
+    degrees = None
+    angVelocity = None
+    motorState = None
+
+    #Pre-calculated values
+    negativeHalfOfRouL2g = None
+    rouL2g = None
+    angularMomentOfInertia = None
+
+    #Temporary hold
     Stopped = True
     previousTime = None
-    g = 9.81 #Gravitational Constant
 
-    def __init__(self, group=None, target=None, name=None, args=(), kwargs=None, daemon=None):
-        return super().__init__(group,target,name,args,kwargs)
+    #Constants
+    g = 9.81
+    rou = (0.1,0.1)
+    motorTorque = (50,50)
 
     def Reset(self,lengths:tuple):
         self.lengths = lengths
-        self.degrees = (pi / 4,0)
+        self.degrees = (pi / 2,pi/2-0.1)
         self.angVelocity = (0,0)
+        self.motorState = (False,False)
         self.Stopped = True
+        self.negativeHalfOfRouL2g = (-self.rou[0] * self.lengths[0] ** 2 * self.g / 2,-self.rou[1] * self.lengths[1] ** 2 * self.g / 2)
+        self.rouL2g = (None,self.rou[1] * self.lengths[1] ** 2 * self.g)
+        self.angularMomentOfInertia = (self.rou[0] * self.lengths[0] / 3,self.rou[1] * self.lengths[1] / 3)
     
     def run(self):
         self.previousTime = datetime.now()
@@ -33,20 +47,23 @@ class DoublePole(Thread):
             currentTime = datetime.now()
             deltaT = (currentTime - self.previousTime).total_seconds() / 10
             self.previousTime = currentTime
-            torque = self.getTorque(self.rou,self.lengths,self.degrees,self.g)
-            I = (self.rou[0] * self.lengths[0] / 3,self.rou[1] * self.lengths[1] / 3)
-            self.angVelocity = self.calculateW((torque[0] / I[0],
-                 torque[1] / I[1]),
-                 self.angVelocity,deltaT)
+            torque = self.getTorque()
+            if(self.motorState[0]^self.motorState[1]):
+                if(self.motorState[0]):
+                    torque[0]-=self.motorTorque[0]
+                else:
+                    torque[0]+=self.motorTorque[1]
+            self.angVelocity = self.calculateW((torque[0] / self.angularMomentOfInertia[0],
+                 torque[1] / self.angularMomentOfInertia[1]),deltaT)
             self.degrees = (self.degrees[0] + self.angVelocity[0] * deltaT,self.degrees[1] + self.angVelocity[1] * deltaT)
             sleep(0.05)
 
-    def getTorque(self,rou:tuple,length:tuple,theta:tuple,g:float):
-        t1 = -rou[0] * (length[0] ^ 2) * g * cos(theta[0]) / 2 + rou[1] * (length[1] ^ 2) * g * sin(theta[1]) * sin(theta[0] - theta[1])
-        t2 = -rou[1] * (length[1] ^ 2) * g * cos(theta[1]) / 2
-        return (t1,t2)
+    def getTorque(self):
+        t1 = self.negativeHalfOfRouL2g[0] * cos(self.degrees[0]) + self.rouL2g[1] * sin(self.degrees[1]) * sin(self.degrees[0] - self.degrees[1])
+        t2 = self.negativeHalfOfRouL2g[1] * cos(self.degrees[1]) 
+        return [t1,t2]
 
-    def calculateW(self,alpha:tuple,currentW:tuple,deltaT:float):
-        w1 = alpha[0] * deltaT + currentW[0]
-        w2 = alpha[1] * deltaT + currentW[1]
+    def calculateW(self,alpha:tuple,deltaT:float):
+        w1 = alpha[0] * deltaT + self.angVelocity[0]
+        w2 = alpha[1] * deltaT + self.angVelocity[1]
         return (w1,w2)

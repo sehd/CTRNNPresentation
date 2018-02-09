@@ -16,17 +16,24 @@ def CalculateLines(lengths:tuple,theta:tuple):
     return (p1,p2)
 
 dp = DoublePole()
-dp.Reset((100,100))
+dp.Reset((10,5))
 dp.start()
 win = GraphWin('Double Pole Viewer',800,600)
-lines=CalculateLines(dp.lengths,dp.degrees)
-
+lines = CalculateLines((dp.lengths[0] * 10,dp.lengths[1] * 10),dp.degrees)
 for x in range(1,10000):
-    lines[0].undraw();lines[1].undraw()
-    lines=CalculateLines(dp.lengths,dp.degrees)
+    lines[0].undraw()
+    lines[1].undraw()
+    lines = CalculateLines((dp.lengths[0] * 10,dp.lengths[1] * 10),dp.degrees)
     lines[0].draw(win)
     lines[1].draw(win)
-    sleep(0.1)
+    sleep(0.05)
+    key = win.checkKey()
+    if(key == 'Left'):
+        dp.motorState = (True,False)
+    elif(key == 'Right'):
+        dp.motorState = (False,True)
+    else:
+        dp.motorState = (False,False)
 
 dp.Stop()
 win.close()
