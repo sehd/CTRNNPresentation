@@ -9,6 +9,8 @@ class Rnn(Thread):
     hidden_size = None
     device = DoublePole()
 
+    stopped = None
+
     def __init__(self,hidden_size:int, group=None, target=None, name=None, args=(), kwargs=None, daemon=None):
         self.Wxh = np.random.randn(4,hidden_size)
         self.Whh = np.random.randn(hidden_size,hidden_size)
@@ -22,10 +24,14 @@ class Rnn(Thread):
         self.Why = Why
 
     def run(self):
-        pass
+        self.device.start()
+        self.stopped = False
+        while ~self.stopped:
+            pass
+        self.device.Stop()
 
     def Stop(self):
-        pass
+        self.stopped = True
 
     def GetState(self):
-        pass
+        return (self.device.degrees,self.device.angVelocity)
