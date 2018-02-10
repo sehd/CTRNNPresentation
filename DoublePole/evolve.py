@@ -2,7 +2,7 @@ from rnn import Rnn
 from time import sleep
 from math import *
 from random import *
-from numpy import numpy as np
+import numpy as np
 
 #Parameters
 populationSize = 100
@@ -13,7 +13,7 @@ hiddenLayerSize = 50
 population = []
 for x in range(0,populationSize):
     rnn = Rnn(hiddenLayerSize)
-    rnn.Start()
+    rnn.start()
     population.append(rnn)
     
 for i in range(1,100):
