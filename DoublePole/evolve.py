@@ -76,10 +76,12 @@ if __name__ == '__main__':
     for i in range(0,processCount):
         error+=res[i]
     
+    Best = [np.zeros(1),10 ** 10]
     for i in range(1,100):    
         error.sort(key=lambda err:err[1])
         print('Best of population ' + str(i) + ': Error = ' + str(error[0][1]) + ' Degrees = ' + str(error[0][0]['State'][0]))
-        Best = str(error[0][0])
+        if(error[0][1] < Best[1]):
+            Best = error[0]
         print('Worst of population ' + str(i) + ': Error = ' + str(error[populationSize - 1][1]) + ' Degrees = ' + str(error[populationSize - 1][0]['State'][0]))
         #------------------------Should bail out if good enough
     
@@ -101,4 +103,4 @@ if __name__ == '__main__':
         for i in range(0,processCount):
             error+=res[i]
 
-    print("Best weights: " + Best)
+    print("Best weights: " + str(Best))
