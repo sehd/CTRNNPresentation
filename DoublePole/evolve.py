@@ -2,76 +2,103 @@ from rnn import Rnn
 from time import sleep
 from math import *
 from random import *
+from multiprocessing import pool
 import numpy as np
 
 #Parameters
-populationSize = 100
-breedingPoolSize = 30
+processCount = 8
+populationSize = 128
+breedingPoolSize = 32
 hiddenLayerSize = 50
+mutationChance = 0.01
 
-#Initiation
-population = []
-for x in range(0,populationSize):
-    print("Starting thread " + str(x + 1))
-    rnn = Rnn(hiddenLayerSize)
-    rnn.start()
-    population.append(rnn)
-    
-for i in range(1,100):
+#Prepare next generation
+def Breed(parrents:list):
+    Wxh = np.zeros((4,hiddenLayerSize))
+    Whh = np.zeros((hiddenLayerSize,hiddenLayerSize))
+    Why = np.zeros((hiddenLayerSize,3))
+    bh = np.zeros(hiddenLayerSize)
+    by = np.zeros(3)
 
-    #Run the population
-    print("Waiting for population to run")
-    sleep(6)
-    
+    parrentChance = (1 - mutationChance) / 2
+    selectionChances = [parrentChance,parrentChance,mutationChance]
+    #Crossover
+    for x in range(0,4):
+        for y in range(0,hiddenLayerSize):
+            parrentWxh = list(parrent[0]['Wxh'][x][y] for parrent in parrents)
+            parrentWxh.append(np.random.normal())
+            Wxh[x][y] = choices(parrentWxh,selectionChances)[0]
+
+    for x in range(0,hiddenLayerSize):
+        for y in range(0,hiddenLayerSize):
+            parrentWhh = list(parrent[0]['Whh'][x][y] for parrent in parrents)
+            parrentWhh.append(np.random.normal())
+            Whh[x][y] = choices(parrentWhh,selectionChances)[0]
+        for y in range(0,3):
+            parrentWhy = list(parrent[0]['Why'][x][y] for parrent in parrents)
+            parrentWhy.append(np.random.normal())
+            Why[x][y] = choices(parrentWhy,selectionChances)[0]
+
+        parrentBh = list(parrent[0]['bh'][x] for parrent in parrents)
+        parrentBh.append(np.random.normal())
+        bh[x] = choices(parrentBh,selectionChances)[0]
+
+    for x in range(0,3):
+        parrentBy = list(parrent[0]['by'][x] for parrent in parrents)
+        parrentBy.append(np.random.normal())
+        by[x] = choices(parrentBy,selectionChances)[0]
+
+    return (Wxh,Whh,Why,bh,by)
+
+def ProcessGenerationPart(Weights):
+    population = []
+    for x in range(0,populationSize // processCount):
+        rnn = Rnn(hiddenLayerSize)
+        if(Weights[x][0] is not None):
+            rnn.SetWeightsManually(Weights[x][0],Weights[x][1],Weights[x][2],Weights[x][3],Weights[x][4])
+        rnn.start()
+        population.append(rnn)
+    sleep(60)
     for rnn in population:
         rnn.Stop()
-    
+
     error = []
     for rnn in population:
         state = rnn.GetState()
-        error.append((rnn,(state[0][0] - pi / 2) ** 2 + ((state[0][1] - pi / 2) / 2) ** 2 + (state[1][0] / 2) ** 2 + (state[1][1]) ** 2))
+        error.append(({'Wxh': rnn.Wxh,'Whh': rnn.Whh,'Why': rnn.Why,'bh': rnn.bh,'by': rnn.by,'State': rnn.GetState()},(state[0][0] - pi / 2) ** 2 + ((state[0][1] - pi / 2) / 2) ** 2 + (state[1][0] / 2) ** 2 + (state[1][1]) ** 2))
+    return error
+
+if __name__ == '__main__':
+    p = pool.Pool(processCount)
+    error = []
+    res = p.map(ProcessGenerationPart,[[(None,None,None,None,None)] * (populationSize // processCount)] * processCount)
+    p.close()
+    for i in range(0,processCount):
+        error+=res[i]
     
-    error.sort(key=lambda err:err[1])
-    print('Best of population ' + str(i) + ': Error = ' + str(error[0][1]) + ' Degrees = ' + str(error[0][0].GetState()[0]))
-    print('Worst of population ' + str(i) + ': Error = ' + str(error[populationSize - 1][1]) + ' Degrees = ' + str(error[populationSize - 1][0].GetState()[0]))
-    #------------------------Should bail out if good enough
+    for i in range(1,100):    
+        error.sort(key=lambda err:err[1])
+        print('Best of population ' + str(i) + ': Error = ' + str(error[0][1]) + ' Degrees = ' + str(error[0][0]['State'][0]))
+        Best = str(error[0][0])
+        print('Worst of population ' + str(i) + ': Error = ' + str(error[populationSize - 1][1]) + ' Degrees = ' + str(error[populationSize - 1][0]['State'][0]))
+        #------------------------Should bail out if good enough
     
-    #Prepare next generation
-    def Breed(parrents:list):
-        Wxh = np.zeros((4,hiddenLayerSize))
-        Whh = np.zeros((hiddenLayerSize,hiddenLayerSize))
-        Why = np.zeros((hiddenLayerSize,3))
-        bh = np.zeros(hiddenLayerSize)
-        by = np.zeros(3)
+        successful_strains = error[0:breedingPoolSize]
+        children = []
+        for x in range(0,populationSize):
+            parrents = choices(successful_strains,k=2)
+            children.append(Breed(parrents))
+        
+        processSeparatedChildren = []
+        threadPerProcessCount = populationSize // processCount
+        for x in range(0,processCount):
+            processSeparatedChildren.append(children[x * threadPerProcessCount:(x + 1) * threadPerProcessCount])
+    
+        p = pool.Pool(processCount)
+        error = []
+        res = p.map(ProcessGenerationPart,processSeparatedChildren)
+        p.close()
+        for i in range(0,processCount):
+            error+=res[i]
 
-        #Crossover
-        for x in range(0,4):
-            for y in range(0,hiddenLayerSize):
-                parrentWxh = tuple(parrent[0].Wxh[x][y] for parrent in parrents)
-                Wxh[x][y] = choice(parrentWxh)
-
-        for x in range(0,hiddenLayerSize):
-            for y in range(0,hiddenLayerSize):
-                Whh[x][y] = choice(tuple(parrent[0].Whh[x][y] for parrent in parrents))
-            for y in range(0,3):
-                Why[x][y] = choice(tuple(parrent[0].Why[x][y] for parrent in parrents))
-            bh[x] = choice(tuple(parrent[0].bh[x] for parrent in parrents))
-
-        for x in range(0,3):
-            by[x] = choice(tuple(parrent[0].by[x] for parrent in parrents))
-
-        #Mutation
-        #TODO
-
-        return (Wxh,Whh,Why,bh,by)
-
-    successful_strains = error[0:breedingPoolSize]
-    population.clear()
-    for x in range(0,populationSize):
-        parrents = choices(successful_strains,k=2)
-        child = Breed(parrents)
-        print("Starting thread " + str(x + 1))
-        rnn = Rnn(hiddenLayerSize)
-        rnn.SetWeightsManually(child[0],child[1],child[2],child[3],child[4])
-        rnn.start()
-        population.append(rnn)
+    print("Best weights: " + Best)
