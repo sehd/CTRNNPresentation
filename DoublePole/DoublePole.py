@@ -23,13 +23,13 @@ class DoublePole(Thread):
     #Constants
     g = 9.81
     rou = (0.1,0.1)
-    motorTorque = (50,50)
+    maxTorque = 200
 
     def Reset(self,lengths:tuple):
         self.lengths = lengths
-        self.degrees = (pi / 2,pi/2-0.1)
+        self.degrees = (pi / 2,pi / 2 - 0.1)
         self.angVelocity = (0,0)
-        self.motorState = (False,False)
+        self.motorState = 0
         self.Stopped = True
         self.negativeHalfOfRouL2g = (-self.rou[0] * self.lengths[0] ** 2 * self.g / 2,-self.rou[1] * self.lengths[1] ** 2 * self.g / 2)
         self.rouL2g = (None,self.rou[1] * self.lengths[1] ** 2 * self.g)
@@ -49,11 +49,7 @@ class DoublePole(Thread):
             deltaT = (currentTime - self.previousTime).total_seconds() / 10
             self.previousTime = currentTime
             torque = self.getTorque()
-            if(self.motorState[0]^self.motorState[1]):
-                if(self.motorState[0]):
-                    torque[0]-=self.motorTorque[0]
-                else:
-                    torque[0]+=self.motorTorque[1]
+            torque[0]+=self.maxTorque * self.motorState
             self.angVelocity = self.calculateW((torque[0] / self.angularMomentOfInertia[0],
                  torque[1] / self.angularMomentOfInertia[1]),deltaT)
             self.degrees = (self.degrees[0] + self.angVelocity[0] * deltaT,self.degrees[1] + self.angVelocity[1] * deltaT)

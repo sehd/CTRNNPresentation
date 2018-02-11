@@ -16,9 +16,9 @@ class Rnn(Thread):
     def __init__(self,hidden_size:int, group=None, target=None, name=None, args=(), kwargs=None, daemon=None):
         self.Wxh = np.random.randn(4,hidden_size)
         self.Whh = np.random.randn(hidden_size,hidden_size)
-        self.Why = np.random.randn(hidden_size,3)
+        self.Why = np.random.randn(hidden_size,1)
         self.bh = np.zeros(hidden_size)
-        self.by = np.zeros(3)
+        self.by = np.zeros(1)
         self.hidden_size = hidden_size
         self.device = DoublePole()
         return super().__init__(group, target, name, args, kwargs)
@@ -43,13 +43,7 @@ class Rnn(Thread):
             input[3] = self.device.angVelocity[1]
             hs = np.tanh(np.dot(input,self.Wxh) + np.dot(self.Whh, hs) + self.bh)
             output = np.dot(hs,self.Why) + self.by
-            mx = max(output)
-            if(output[0] == mx):
-                self.device.motorState = (True,False)
-            elif(output[1] == mx):
-                self.device.motorState = (False,False)
-            else:
-                self.device.motorState = (False,True)
+            self.device.motorState = output
         self.device.Stop()
 
     def Stop(self):

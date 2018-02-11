@@ -11,18 +11,21 @@ populationSize = 128
 breedingPoolSize = 32
 hiddenLayerSize = 50
 mutationChance = 0.01
+outputLayerSize = 1
 
 #Prepare next generation
 def Breed(parrents:list):
     Wxh = np.zeros((4,hiddenLayerSize))
     Whh = np.zeros((hiddenLayerSize,hiddenLayerSize))
-    Why = np.zeros((hiddenLayerSize,3))
+    Why = np.zeros((hiddenLayerSize,outputLayerSize))
     bh = np.zeros(hiddenLayerSize)
-    by = np.zeros(3)
+    by = np.zeros(outputLayerSize)
 
     parrentChance = (1 - mutationChance) / 2
     selectionChances = [parrentChance,parrentChance,mutationChance]
-    #Crossover
+    parrentChanceBias = (1 - mutationChance * 2) / 2
+    selectionChancesBias = [parrentChanceBias,parrentChanceBias,mutationChance * 2]
+    #Crossover and mutation
     for x in range(0,4):
         for y in range(0,hiddenLayerSize):
             parrentWxh = list(parrent[0]['Wxh'][x][y] for parrent in parrents)
@@ -34,19 +37,19 @@ def Breed(parrents:list):
             parrentWhh = list(parrent[0]['Whh'][x][y] for parrent in parrents)
             parrentWhh.append(np.random.normal())
             Whh[x][y] = choices(parrentWhh,selectionChances)[0]
-        for y in range(0,3):
+        for y in range(0,outputLayerSize):
             parrentWhy = list(parrent[0]['Why'][x][y] for parrent in parrents)
             parrentWhy.append(np.random.normal())
             Why[x][y] = choices(parrentWhy,selectionChances)[0]
 
         parrentBh = list(parrent[0]['bh'][x] for parrent in parrents)
         parrentBh.append(np.random.normal())
-        bh[x] = choices(parrentBh,selectionChances)[0]
+        bh[x] = choices(parrentBh,selectionChancesBias)[0]
 
-    for x in range(0,3):
+    for x in range(0,outputLayerSize):
         parrentBy = list(parrent[0]['by'][x] for parrent in parrents)
         parrentBy.append(np.random.normal())
-        by[x] = choices(parrentBy,selectionChances)[0]
+        by[x] = choices(parrentBy,selectionChancesBias)[0]
 
     return (Wxh,Whh,Why,bh,by)
 
@@ -65,7 +68,7 @@ def ProcessGenerationPart(Weights):
     error = []
     for rnn in population:
         state = rnn.GetState()
-        error.append(({'Wxh': rnn.Wxh,'Whh': rnn.Whh,'Why': rnn.Why,'bh': rnn.bh,'by': rnn.by,'State': rnn.GetState()},(state[0][0] - pi / 2) ** 2 + ((state[0][1] - pi / 2) / 2) ** 2 + (state[1][0] / 2) ** 2 + (state[1][1]) ** 2))
+        error.append(({'Wxh': rnn.Wxh,'Whh': rnn.Whh,'Why': rnn.Why,'bh': rnn.bh,'by': rnn.by,'State': rnn.GetState()},(sin(state[0][0]) -1) ** 2 + ((sin(state[0][1]) - 1) / 2) ** 2 + (state[1][0] / 2) ** 2 + (state[1][1]) ** 2))
     return error
 
 if __name__ == '__main__':
