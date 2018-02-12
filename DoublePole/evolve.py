@@ -6,9 +6,9 @@ from multiprocessing import pool
 import numpy as np
 
 #Parameters
-processCount = 8
-populationSize = 128
-breedingPoolSize = 32
+processCount = 1
+populationSize = 16
+breedingPoolSize = 4
 hiddenLayerSize = 50
 mutationChance = 0.01
 outputLayerSize = 1
@@ -55,8 +55,10 @@ def Breed(parrents:list):
 
 def ProcessGenerationPart(Weights):
     population = []
+    vFirst = True
     for x in range(0,populationSize // processCount):
-        rnn = Rnn(hiddenLayerSize)
+        rnn = Rnn(hiddenLayerSize,visualize=vFirst)
+        vFirst = False
         if(Weights[x][0] is not None):
             rnn.SetWeightsManually(Weights[x][0],Weights[x][1],Weights[x][2],Weights[x][3],Weights[x][4])
         rnn.start()
@@ -68,7 +70,7 @@ def ProcessGenerationPart(Weights):
     error = []
     for rnn in population:
         state = rnn.GetState()
-        error.append(({'Wxh': rnn.Wxh,'Whh': rnn.Whh,'Why': rnn.Why,'bh': rnn.bh,'by': rnn.by,'State': rnn.GetState()},(sin(state[0][0]) -1) ** 2 + ((sin(state[0][1]) - 1) / 2) ** 2 + (state[1][0] / 2) ** 2 + (state[1][1]) ** 2))
+        error.append(({'Wxh': rnn.Wxh,'Whh': rnn.Whh,'Why': rnn.Why,'bh': rnn.bh,'by': rnn.by,'State': rnn.GetState()},(sin(state[0][0]) - 1) ** 2 + ((sin(state[0][1]) - 1) / 2) ** 2 + (state[1][0] / 2) ** 2 + (state[1][1]) ** 2))
     return error
 
 if __name__ == '__main__':

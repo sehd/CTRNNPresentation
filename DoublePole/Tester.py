@@ -29,11 +29,11 @@ for x in range(1,10000):
     sleep(0.05)
     key = win.checkKey()
     if(key == 'Left'):
-        dp.motorState = (True,False)
+        dp.motorState = 1
     elif(key == 'Right'):
-        dp.motorState = (False,True)
+        dp.motorState = 0
     else:
-        dp.motorState = (False,False)
+        dp.motorState = -1
 
 dp.Stop()
 win.close()

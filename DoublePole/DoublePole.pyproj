@@ -4,7 +4,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>9fdce37c-ffea-4b3a-bd4b-1c957dfad636</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>evolve.py</StartupFile>
+    <StartupFile>Tester.py</StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>

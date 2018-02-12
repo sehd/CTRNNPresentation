@@ -46,14 +46,14 @@ class DoublePole(Thread):
     def Loop(self):
         while ~self.Stopped:
             currentTime = datetime.now()
-            deltaT = (currentTime - self.previousTime).total_seconds() / 10
+            deltaT = 0.01# (currentTime - self.previousTime).total_seconds() / 10
             self.previousTime = currentTime
             torque = self.getTorque()
             torque[0]+=self.maxTorque * self.motorState
             self.angVelocity = self.calculateW((torque[0] / self.angularMomentOfInertia[0],
                  torque[1] / self.angularMomentOfInertia[1]),deltaT)
             self.degrees = (self.degrees[0] + self.angVelocity[0] * deltaT,self.degrees[1] + self.angVelocity[1] * deltaT)
-            #sleep(0.05)
+            #sleep(0.01)
 
     def getTorque(self):
         t1 = self.negativeHalfOfRouL2g[0] * cos(self.degrees[0]) + self.rouL2g[1] * sin(self.degrees[1]) * sin(self.degrees[0] - self.degrees[1])

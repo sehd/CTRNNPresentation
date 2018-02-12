@@ -7,15 +7,11 @@ from threading import Thread
 class DoublePoleVisualizer(Thread):
     lines = None
     win = None
-
-    def run(self):
-        Loop()
-
-    def SetPoles(self,doublePole:DoublePole):
-        self.win = GraphWin('Double Pole Viewer',800,600)
-        self.lines = CalculateLines(dp.lengths,dp.degrees)
-
-    def CalculateLines(lengths:tuple,theta:tuple):
+    dp = None
+    
+    def CalculateLines(self,lengths:tuple,theta:tuple):
+        if((lengths is None) or (theta is None)):
+            return None
         origin = Point(400,300)
         eop1 = Point(lengths[0] * cos(theta[0]) + origin.x,-lengths[0] * sin(theta[0]) + origin.y)
         eop2 = Point(lengths[1] * cos(theta[1]) + eop1.x,-lengths[1] * sin(theta[1]) + eop1.y)
@@ -26,14 +22,25 @@ class DoublePoleVisualizer(Thread):
         p2.setWidth(5)
         p2.setFill('blue')
         return (p1,p2)
+
+    def run(self):
+        self.Loop()
+
+    def SetPoles(self,doublePole:DoublePole):
+        self.dp = doublePole
+        self.win = GraphWin('Double Pole Viewer',800,600)
+        self.lines = self.CalculateLines(self.dp.lengths,self.dp.degrees)
     
-    def Loop():
+    def Loop(self):
         while True:
-            lines[0].undraw()
-            lines[1].undraw()
-            lines = CalculateLines(dp.lengths,dp.degrees)
-            lines[0].draw(win)
-            lines[1].draw(win)
+            if(self.lines is None):
+                sleep(0.1)
+                continue
+            self.lines[0].undraw()
+            self.lines[1].undraw()
+            self.lines = self.CalculateLines(self.dp.lengths,self.dp.degrees)
+            self.lines[0].draw(win)
+            self.lines[1].draw(win)
             sleep(0.1)
     
         
