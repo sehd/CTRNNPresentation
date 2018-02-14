@@ -4,7 +4,7 @@ from graphics import *
 from math import *
 from threading import Thread
 
-class DoublePoleVisualizer(Thread):
+class DoublePoleVisualizer(object):
     lines = None
     win = None
     dp = None
@@ -35,12 +35,13 @@ class DoublePoleVisualizer(Thread):
         while True:
             if(self.lines is None):
                 sleep(0.1)
+                self.lines = self.CalculateLines(self.dp.lengths,self.dp.degrees)
                 continue
             self.lines[0].undraw()
             self.lines[1].undraw()
             self.lines = self.CalculateLines(self.dp.lengths,self.dp.degrees)
-            self.lines[0].draw(win)
-            self.lines[1].draw(win)
+            self.lines[0].draw(self.win)
+            self.lines[1].draw(self.win)
             sleep(0.1)
     
         

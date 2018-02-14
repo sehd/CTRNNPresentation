@@ -27,7 +27,7 @@ class DoublePole(Thread):
 
     def Reset(self,lengths:tuple):
         self.lengths = lengths
-        self.degrees = (pi / 2,pi / 2 - 0.1)
+        self.degrees = (pi / 2,pi / 2-1 )
         self.angVelocity = (0,0)
         self.motorState = 0
         self.Stopped = True
@@ -46,7 +46,7 @@ class DoublePole(Thread):
     def Loop(self):
         while ~self.Stopped:
             currentTime = datetime.now()
-            deltaT = 0.01# (currentTime - self.previousTime).total_seconds() / 10
+            deltaT =(currentTime - self.previousTime).total_seconds() / 10
             self.previousTime = currentTime
             torque = self.getTorque()
             torque[0]+=self.maxTorque * self.motorState

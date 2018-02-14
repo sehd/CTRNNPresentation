@@ -2,6 +2,8 @@ import numpy as np
 from DoublePole import *
 from threading import Thread
 from DoublePoleVisualizer import DoublePoleVisualizer
+from multiprocessing import process
+
 class Rnn(Thread):
     Wxh = None
     Whh = None
@@ -13,7 +15,7 @@ class Rnn(Thread):
 
     stopped = None
 
-    def __init__(self,hidden_size:int, group=None, target=None, name=None, args=(), kwargs=None, daemon=None,visualize=False):
+    def __init__(self,hidden_size:int, group=None, target=None, name=None, args=(), kwargs=None, daemon=None):
         self.Wxh = np.random.randn(4,hidden_size)
         self.Whh = np.random.randn(hidden_size,hidden_size)
         self.Why = np.random.randn(hidden_size,1)
@@ -21,10 +23,6 @@ class Rnn(Thread):
         self.by = np.zeros(1)
         self.hidden_size = hidden_size
         self.device = DoublePole()
-        if(visualize):
-            view = DoublePoleVisualizer()
-            view.SetPoles(self.device)
-            view.start()
         return super().__init__(group, target, name, args, kwargs)
 
     def SetWeightsManually(self,Wxh,Whh,Why,bh,by):
@@ -35,7 +33,7 @@ class Rnn(Thread):
         self.by = by
 
     def run(self):
-        self.device.Reset((10,5))
+        self.device.Reset((100,50))
         self.device.start()
         self.stopped = False
         hs = np.zeros(self.hidden_size)

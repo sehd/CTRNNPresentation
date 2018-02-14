@@ -4,14 +4,16 @@ from math import *
 from random import *
 from multiprocessing import pool
 import numpy as np
+from DoublePoleVisualizer import DoublePoleVisualizer
 
 #Parameters
-processCount = 1
-populationSize = 16
-breedingPoolSize = 4
+processCount = 8
+populationSize = 128
+breedingPoolSize = 32
 hiddenLayerSize = 50
 mutationChance = 0.01
 outputLayerSize = 1
+totalGenerations = 50
 
 #Prepare next generation
 def Breed(parrents:list):
@@ -54,16 +56,22 @@ def Breed(parrents:list):
     return (Wxh,Whh,Why,bh,by)
 
 def ProcessGenerationPart(Weights):
+    generationRunningPeriod = 6
+    shouldVisualize = False
     population = []
-    vFirst = True
+    vFirst = False
     for x in range(0,populationSize // processCount):
-        rnn = Rnn(hiddenLayerSize,visualize=vFirst)
-        vFirst = False
+        rnn = Rnn(hiddenLayerSize)
         if(Weights[x][0] is not None):
             rnn.SetWeightsManually(Weights[x][0],Weights[x][1],Weights[x][2],Weights[x][3],Weights[x][4])
         rnn.start()
         population.append(rnn)
-    sleep(60)
+        if(shouldVisualize):
+            view = DoublePoleVisualizer()
+            view.SetPoles(rnn.device)
+            view.run()
+            shouldVisualize = False
+    sleep(generationRunningPeriod)
     for rnn in population:
         rnn.Stop()
 
@@ -82,7 +90,7 @@ if __name__ == '__main__':
         error+=res[i]
     
     Best = [np.zeros(1),10 ** 10]
-    for i in range(1,100):    
+    for i in range(1,totalGenerations):    
         error.sort(key=lambda err:err[1])
         print('Best of population ' + str(i) + ': Error = ' + str(error[0][1]) + ' Degrees = ' + str(error[0][0]['State'][0]))
         if(error[0][1] < Best[1]):

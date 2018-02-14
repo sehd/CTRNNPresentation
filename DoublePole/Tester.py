@@ -26,14 +26,14 @@ for x in range(1,10000):
     lines = CalculateLines((dp.lengths[0] * 10,dp.lengths[1] * 10),dp.degrees)
     lines[0].draw(win)
     lines[1].draw(win)
-    sleep(0.05)
+    sleep(0.01)
     key = win.checkKey()
     if(key == 'Left'):
-        dp.motorState = 1
+        dp.motorState =1
     elif(key == 'Right'):
-        dp.motorState = 0
+        dp.motorState =-1
     else:
-        dp.motorState = -1
+        dp.motorState = 0
 
 dp.Stop()
 win.close()
